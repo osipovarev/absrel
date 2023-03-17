@@ -1,0 +1,59 @@
+
+### Get genes under selection per nectar clade
+
+# (removed all genes with unknown function)
+
+# 2021 classification:
+clades=$(echo "hmmbrds honeyeaters lorikeet sunbirds")
+
+
+# 2022 classification (changed definition of core nectar/ambiguous/core nonnectar branches):
+# NB: include reg_xx, exclude HLparPun1
+
+TARGET=nectar
+clades=$(echo "hmmbrds honeyeaters nectar_parrots sunbirds")
+
+TARGET=nonnectar
+clades=$(echo "swifts falcons lyrebirds passerides")
+
+for i in $clades;
+do
+ grep ^$i under_selection_per_clade_0.05.$TARGET.tsv | cut -f2 > $i.under_selection_per_clade_0.05.txt;
+done
+
+
+
+### Enrichment analysis with metascape
+
+# prepare lists for metascape
+for i in $clades; do printf $i"\t"; cat $i.under_selection_per_clade_0.05.txt | tr '\n' ','; echo; done > Metascape_enrich_4_lists/for_metascape_4lists.under_selection_per_clade_0.05.$TARGET.txt
+
+# run enrichment analysis: Min Overlap=2; P Value Cutoff=0.05; Min Enrichment=1.5; background genes = all genes.
+
+
+# 1) Get results for Go terms with rank 4 only
+# 2) Remove immidiate children of any in the list (remove redundancy)
+
+# GO-list before validation:
+golist=GO:0061061,GO:0001568,GO:0048514,GO:0014909,GO:0014812,GO:0001525,GO:0005975,GO:0005996,GO:0010498,GO:0043161,GO:0000209,GO:0016567,GO:0032446,GO:0050801,GO:0043269,GO:0034765,GO:0030001,GO:0120161,GO:0044057,GO:0034762,GO:0000278,GO:0007160,GO:0038146,GO:0032456,GO:0051345,GO:0007017,GO:0031589
+# GO-list after validation:
+golist=GO:0061061,GO:0051345,GO:0060284,GO:0010720,GO:0043161,GO:0010498,GO:0043632,GO:0044265,GO:0016567,GO:0000209,GO:0032446,GO:0043269,GO:0034765,GO:0044057,GO:0031589,GO:0007160,GO:0051301,GO:0033365,GO:0030001,GO:0006468,GO:0009314,GO:0070372,GO:0043410,GO:0043408,GO:0031579,GO:0038146,GO:0014909,GO:0001568,GO:0001944,GO:0048514,GO:0001525,GO:0034377
+
+GOOBO=~/Documents/LabDocs/GO_terms_genes/go.obo
+for g in $(cut -f5 validated.results_summary.rank_4.go_terms.pval.tsv | tail  +2); do get_go_children.py -f $GOOBO -go $g -l $golist; done | grep "has parents" | awk '{print $1}' > to_exclude_go.lst
+
+# exclude these terms
+filter_annotation_with_list.py -b -c 5 -a validated.results_summary.rank_4.go_terms.pval.tsv -l to_exclude_go.lst > noChildren.validated.results_summary.rank_4.go_terms.pval.tsv
+
+
+# 3) Get immidiate children for GO terms of interest (muscle development, blood vessel development, carbohydrate metabolism)
+
+for g in $(cat go_terms_interest.lst); do grep $g noChildren.validated.results_summary.rank_4.go_terms.pval.tsv | cut -f5,6; get_go_children.py -f $GOOBO -go $g -c | cut -f1 | tr '\n' ','; echo; done > validated.go_terms_interest.children.tsv
+
+for g in $(cut -f1 validated.children.results.go_terms.pval.tsv); do grep $g metascape_result_all_corr/_FINAL_GO.csv | awk -F"," '$11 >=1 {print}'; done | cut -d, -f5-15 | tr ',' '\t' | cut -f1-5,11 > file; mv file validated.children.results.go_terms.pval.tsv
+
+
+
+# 4) Get genes
+for g in $(tail -n +2 children.results.go_terms.pval.tsv | cut -f5); do printf $g"\t"; grep $g metascape_result_all_corr//_FINAL_GO.csv | cut -d, -f27; done
+
