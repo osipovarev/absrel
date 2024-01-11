@@ -77,10 +77,10 @@ cut -f2 under_selection_per_clade_0.05.nonnectar.tsv | sort | uniq -c | awk '$1>
 # Remove immidiate GO children
 GOOBO=~/Documents/LabDocs/GO_terms_genes/go.obo
 METRES=metascape_results_nonnectar_union_729/Enrichment_GO/_FINAL_GO.csv
-golist=$(awk '$2 < -3 {print }' $METRES | cut -d, -f3 | tail +2 | tr '\n' ',')
+golist=$(awk -F"," '$2 < -3 {print }' $METRES | cut -d, -f3 | tail +2 | tr '\n' ',')
 OUT=noChildren.729_genes.metascape_GO.tsv
 
-for g in $( cut -d, -f3 | tail +2); do get_go_children.py -f $GOOBO  -go $g -l $golist ; done | grep "has parents" | awk '{print $1}' > to_exclude_go.lst
+for g in $(echo $golist | tr ',' '\n' | sed '/^$/d'); do echo $g; get_go_children.py -f $GOOBO  -go $g -l $golist ; done | grep "has parents" | awk '{print $1}' > to_exclude_go.lst
 
 filter_annotation_with_list.py  -b -c 3 -a <(sed 's/,/\t/g' $METRES | awk '$2 < -3 {print }') -l to_exclude_go.lst | cut -f3,9-13,21,22 > $OUT
 
