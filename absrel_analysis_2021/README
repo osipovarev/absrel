@@ -57,3 +57,34 @@ for g in $(cut -f1 validated.children.results.go_terms.pval.tsv); do grep $g met
 # 4) Get genes
 for g in $(tail -n +2 children.results.go_terms.pval.tsv | cut -f5); do printf $g"\t"; grep $g metascape_result_all_corr//_FINAL_GO.csv | cut -d, -f27; done
 
+
+
+
+### Metascape results analysis additional
+    4839 genes_under_selection_somewhere.lst
+    1114 genes_under_selection_somewhere_nectar.lst
+     729 genes_under_selection_somewhere_nonnectar.lst
+
+# in at least 2
+cut -f2 under_selection_per_clade_0.05.nectar.tsv | sort | uniq -c | awk '$1>1{print $2}' | wc -l
+cut -f2 under_selection_per_clade_0.05.nonnectar.tsv | sort | uniq -c | awk '$1>1{print $2}' | wc -l
+# 386 nectar
+# 171 nonnectar
+
+
+# Submit to metascape: p-value<=0.001; min overlap=3; enrich=1.5; 
+
+# Remove immidiate GO children
+GOOBO=~/Documents/LabDocs/GO_terms_genes/go.obo
+METRES=metascape_results_nonnectar_union_729/Enrichment_GO/_FINAL_GO.csv
+golist=$(cut -d, -f3 $METRES | tail +2 | tr '\n' ',')
+OUT=noChildren.729_genes.metascape_GO.tsv
+
+for g in $( cut -d, -f3 | tail +2); do get_go_children.py -f $GOOBO  -go $g -l $golist ; done | grep "has parents" | awk '{print $1}' > to_exclude_go.lst
+
+filter_annotation_with_list.py  -b -c 3 -a <(sed 's/,/\t/g' $METRES) -l to_exclude_go.lst | cut -f3,9-13,21,22 > $OUT
+
+# check gene hits
+for hits in $(cat hits_to_check.lst ); do filter_annotation_with_list.py -c 1 -a <(echo $hits |  tr '|' '\n') -l <(cat $BT/up_liver_genes_*not_nectar.txt ) | tr '\n' '|'; echo; done  > temp
+
+
