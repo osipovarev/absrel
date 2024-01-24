@@ -88,3 +88,11 @@ filter_annotation_with_list.py  -b -c 3 -a <(sed 's/,/\t/g' $METRES | awk '$2 < 
 for hits in $(cat hits_to_check.lst ); do filter_annotation_with_list.py -c 1 -a <(echo $hits |  tr '|' '\n') -l <(cat $BT/up_liver_genes_*not_nectar.txt ) | tr '\n' '|'; echo; done  > temp
 
 
+
+### Exclude semantically close GO terms
+
+# check GO semantic similarity
+make_all_against_all_table.py -l1 $(cut -f1 $OUT1 | tr '\n' ',')  -l2 $(cut -f1 $OUT2 | tr '\n' ',') > all_against_all.386_vs_171.go.txt
+
+filter_annotation_with_list.py -b -c 1 -l <(awk '$4>=0.5{print}' similarity.all_against_all.1114_vs_729.go.txt | cut -d" " -f1 | s -u) -a $OUT1 | wc -l
+
