@@ -1,0 +1,22 @@
+
+### Get genes under selection per nectar clade
+
+TARGET=nectar
+clades=$(echo "hmmbrds honeyeaters nectar_parrots sunbirds")
+
+TARGET=nonnectar
+clades=$(echo "swifts falcons lyrebirds passerides")
+
+for i in $clades;
+do
+ grep ^$i under_selection_per_clade_0.05.$TARGET.tsv | cut -f2 > $i.under_selection_per_clade_0.05.txt;
+done
+
+
+
+### Enrichment analysis with metascape
+
+# prepare lists for metascape
+for i in $clades; do printf $i"\t"; cat $i.under_selection_per_clade_0.05.txt | tr '\n' ','; echo; done > Metascape_enrich_4_lists/for_metascape_4lists.under_selection_per_clade_0.05.$TARGET.txt
+
+# run enrichment analysis: Min Overlap=2; P Value Cutoff=0.05; Min Enrichment=1.5; background genes = all genes.
