@@ -13,8 +13,21 @@ do
 done
 
 
+### Enrichment analysis with ClusterProfiler
+
+clades=$(echo hmmbrds honeyeaters nectar_parrots sunbirds falcons lyrebirds swifts passerides)
+for i in $clades;
+do 
+ echo $i; 
+ goenrich_genelist.R -w $(pwd) -g $i.under_selection_per_clade_0.05.txt -o ClusterProfiler/goenrich.$i.under_selection_per_clade_0.05.tsv;
+done
+
+
+
 
 ### Enrichment analysis with metascape
+
+md Metascape_enrich_4_lists/
 
 # prepare lists for metascape
 for i in $clades; do printf $i"\t"; cat $i.under_selection_per_clade_0.05.txt | tr '\n' ','; echo; done > Metascape_enrich_4_lists/for_metascape_4lists.under_selection_per_clade_0.05.$TARGET.txt
