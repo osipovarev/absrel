@@ -24,6 +24,14 @@ done
 
 
 
+### Run enrichments for genes in diff ranks
+
+TARGET=nectar
+TARGET=nonnectar
+
+for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_0.05.$TARGET.tsv | sort | uniq -c | awk -v var=$i '$1>=var{print $2}' > rank${i}.$TARGET.genes_selection.lst; done
+
+
 
 ### Enrichment analysis with metascape
 
