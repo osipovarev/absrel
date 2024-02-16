@@ -14,12 +14,14 @@ done
 
 
 ### Enrichment analysis with ClusterProfiler
+## Correction: with human ensembl genes!!
 
 clades=$(echo hmmbrds honeyeaters nectar_parrots sunbirds falcons lyrebirds swifts passerides)
 for i in $clades;
 do 
- echo $i; 
- goenrich_genelist.R -w $(pwd) -g $i.under_selection_per_clade_0.05.txt -o ClusterProfiler/goenrich.$i.under_selection_per_clade_0.05.tsv;
+ echo $i;
+ renameToHLscaffolds.py -c 1 -a $i.under_selection_per_clade_0.05.txt -d <(sed 's/\t/,/' ../galGal6_gene.hg38_ens_gene.tsv) | grep ^ENSG  > hg38.$i.under_selection_per_clade_0.05.txt 
+ goenrich_genelist.R -w $(pwd) -g hg38.$i.under_selection_per_clade_0.05.txt -o ClusterProfiler/hg38.goenrich.$i.under_selection_per_clade_0.05.tsv;
 done
 
 
@@ -32,11 +34,15 @@ TARGET=nonnectar
 ## make gene lists
 for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_0.05.$TARGET.tsv | sort | uniq -c | awk -v var=$i '$1>=var{print $2}' > rank${i}.$TARGET.genes_selection.lst; done
 
-## run enrichGO
-for t in nectar nonnectar; do for i in  {1..4}; do echo $i; goenrich_genelist.R -w $(pwd) -g rank${i}.$t.genes_selection.lst -o ClusterProfiler/goenrich.rank${i}.$t.
+### Run enrichGO
+
+## by clade
+
+## by rank. Correction: with human ensembl genes!!
+for t in nectar nonnectar; do for i in  {1..4}; do echo $i; goenrich_genelist.R -w $(pwd) -g hg38.rank${i}.$t.genes_selection.lst -o ClusterProfiler/hg38.goenrich.rank${i}.$t.
 tsv; done; done
 
-## run GO enrich by level
+## by level
 for i in $clades; do goenrich_genelist.R -w $(pwd) -g $i.under_selection_per_clade_0.05.txt -o ClusterProfiler/level3.goenrich.$i.under_selection_per_clade_0.05.tsv; done
 
 
