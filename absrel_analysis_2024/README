@@ -40,6 +40,13 @@ for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_0.05.$TARGET.tsv 
 
 ## by clade
 
+## Get 3-4 way convergent terms
+all_nectaf=$(echo gene_hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv)
+
+for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); do grep $g for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); do grep $g $all_nectaf ; done | s -u > gene_hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv 
+; done | s -u > 3_4_way_convergent_terms.nectar.tsv
+
+
 
 ## by rank. Correction: with human ensembl genes!!
 for f in $(ls rank*genes_selection.lst); do echo $f; renameToHLscaffolds.py -c 1 -a $f -d <(sed 's/\t/,/' ../galGal6_gene.hg38_ens_gene.tsv) | grep ^ENSG  > hg38.$f; done
