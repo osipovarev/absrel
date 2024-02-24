@@ -60,6 +60,20 @@ for i in {1..4}; do for g in $(grep "homeostas\|blood\|cardi\|system process\|ca
 
 
 
+### Test convergence with F-exact test
+
+for i in 2 3 4; \
+do \
+	paste \
+	<(for p in $(grep ^nectar${i}way pairs_test_control.tsv | cut -f2); do shared=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | awk '$1==2{print}' | wc -l| awk '{print $1}'); universe=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | wc -l| awk '{print $1}');v echo -e "$p\t$shared\t$universe"; done) \
+	<(for p in $(grep ^nonnectar${i}way pairs_test_control.tsv | cut -f2); do shared=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | awk '$1==2{print}' | wc -l| awk '{print $1}'); universe=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | wc -l| awk '{print $1}'); echo -e "$p\t$shared\t$universe"; done); \
+done > matching_test_control.tsv
+
+
+paste <(cut -f1,2 summary.matching_test_control.tsv | tail +2) <(for line in $(cat matching_test_control.tsv | awk '{print $2","$3","$5","$6}'); do simple_fisher_exact.R $line; done | cut -d: -f2 | sed 's/^ //' | sed 's/ $//' | tr ' ' '\n') > file;
+
+mv file summary.matching_test_control.tsv
+
 
 ### Enrichment analysis with Metascape
 
