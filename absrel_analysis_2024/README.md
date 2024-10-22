@@ -1,85 +1,117 @@
+# Enrichment analysis with ClusterProfiler
 
-### Get genes under selection per nectar clade
-
+## 1. Get genes under selection per nectar clade
+```
 TARGET=nectar
 clades=$(echo "hmmbrds honeyeaters nectar_parrots sunbirds")
 
 TARGET=nonnectar
 clades=$(echo "swifts falcons lyrebirds passerides")
 
-for i in $clades;
-do
- grep ^$i under_selection_per_clade_0.05.$TARGET.tsv | cut -f2 > $i.under_selection_per_clade_0.05.txt;
+for i in $clades; \
+do \
+ grep ^$i under_selection_per_clade_0.05.$TARGET.tsv | cut -f2 > $i.under_selection_per_clade_0.05.txt; \
 done
+```
 
 
-### Enrichment analysis with ClusterProfiler
-## Correction: with human ensembl genes!!
-
+## 2. Run enrichment GO analysis 
+### NB: Replace gene names with human ensembl gene names for the enrichcment analysis
+```
 clades=$(echo hmmbrds honeyeaters nectar_parrots sunbirds falcons lyrebirds swifts passerides)
-for i in $clades;
-do 
- echo $i;
- renameToHLscaffolds.py -c 1 -a $i.under_selection_per_clade_0.05.txt -d <(sed 's/\t/,/' ../galGal6_gene.hg38_ens_gene.tsv) | grep ^ENSG  > hg38.$i.under_selection_per_clade_0.05.txt 
+RENAMEDICT=~/Documents/LabDocs/Chicken_resources/galGal6_gene.hg38_ens_gene.tsv
+
+for i in $clades; \
+do \
+ echo $i; \
+
+ renameToHLscaffolds.py -c 1 -a $i.under_selection_per_clade_0.05.txt -d <(sed 's/\t/,/' $RENAMEDICT) | grep ^ENSG  > hg38.$i.under_selection_per_clade_0.05.txt; \ 
+ 
  goenrich_genelist.R -w $(pwd) -g hg38.$i.under_selection_per_clade_0.05.txt -o ClusterProfiler/hg38.goenrich.$i.under_selection_per_clade_0.05.tsv;
 done
+```
 
 
 
-### Run enrichments for genes in diff ranks
-
+## 3. Run enrichment GO analysis for genes of different ranks
+```
 TARGET=nectar
 TARGET=nonnectar
+```
 
-## make gene lists
+### 3.1. Make gene lists
+```
 for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_0.05.$TARGET.tsv | sort | uniq -c | awk -v var=$i '$1>=var{print $2}' > rank${i}.$TARGET.genes_selection.lst; done
+```
+
+### 3.2. Run enrichGO by rank
+```
+for f in $(ls rank*genes_selection.lst); \
+do \
+	echo $f; \
+	renameToHLscaffolds.py -c 1 -a $f -d <(sed 's/\t/,/' $RENAMEDICT) | grep ^ENSG  > hg38.$f; \
+done
+
+for t in nectar nonnectar; \
+do \
+	for i in  {1..4}; \
+	do \
+		echo $i; \
+		goenrich_genelist.R -w $(pwd) -g hg38.rank${i}.$t.genes_selection.lst -o ClusterProfiler/hg38.goenrich.rank${i}.$t.tsv; \
+	done; \
+done
+```
 
 
-### Run enrichGO
 
-
-## by clade
-
-## Get 3-4 way convergent terms
+## 4. Test convergence: get 3-4 way convergent terms
+```
 all_nectaf=$(echo gene_hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv)
 
-for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); do grep $g for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); do grep $g $all_nectaf ; done | s -u > gene_hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv 
-; done | s -u > 3_4_way_convergent_terms.nectar.tsv
+for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); \
+do \
+	grep $g; \
+	for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); \
+	do \
+		grep $g $all_nectaf ; \
+	done | s -u > gene_hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv; \
+done | s -u > 3_4_way_convergent_terms.nectar.tsv
+```
 
 
 
-## by rank. Correction: with human ensembl genes!!
-for f in $(ls rank*genes_selection.lst); do echo $f; renameToHLscaffolds.py -c 1 -a $f -d <(sed 's/\t/,/' ../galGal6_gene.hg38_ens_gene.tsv) | grep ^ENSG  > hg38.$f; done
+## 5. Make breakdown of selected terms
+```
+for i in {1..4}; \
+do \
+	for g in $(grep "homeostas\|blood\|cardi\|system process\|carbo\|macromolec" represent_GO.rank${i}.nectar.tsv  | cut -f1 | cut -d: -f1,2); \
+	do  \
+		children=$(grep "^$g\t" represent_GO.rank${i}.nectar.tsv | cut -f5 | sed 's/,/ /g'); \
+		for c in $children; \
+		do \
+			printf "$g\t"; \
+			grep $c gene_hg38.goenrich.rank${i}.nectar.tsv; \
+		done; \
+	done; \
+done > breakdown.interesting_rank_terms.nectar.tsv
+```
 
-for t in nectar nonnectar; do for i in  {1..4}; do echo $i; goenrich_genelist.R -w $(pwd) -g hg38.rank${i}.$t.genes_selection.lst -o ClusterProfiler/hg38.goenrich.rank${i}.$t.
-tsv; done; done
 
 
-### Make breakdown of interesting terms
-for i in {1..4}; do for g in $(grep "homeostas\|blood\|cardi\|system process\|carbo\|macromolec" represent_GO.rank${i}.nectar.tsv  | cut -f1 | cut -d: -f1,2); do  children=$(grep "^$g\t" represent_GO.rank${i}.nectar.tsv | cut -f5 | sed 's/,/ /g'); for c in $children; do printf "$g\t"; grep $c gene_hg38.goenrich.rank${i}.nectar.tsv; done; done; done > breakdown.interesting_rank_terms.nectar.tsv
-
-
-
-### Test convergence with F-exact test
-
+## 6. Test convergence with Fisher-exact test
+```
 for i in 2 3 4; \
 do \
 	paste \
 	<(for p in $(grep ^nectar${i}way pairs_test_control.tsv | cut -f2); do shared=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | awk -v var=$i '$1==var{print}' | wc -l| awk '{print $1}'); universe=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | wc -l| awk '{print $1}'); echo -e "$p\t$shared\t$universe"; done) \
+
 	<(for p in $(grep ^nonnectar${i}way pairs_test_control.tsv | cut -f2); do shared=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | awk -v var=$i '$1==var{print}' | wc -l| awk '{print $1}'); universe=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | wc -l| awk '{print $1}'); echo -e "$p\t$shared\t$universe"; done); \
+
 done | awk '{OFS="\t"; print $1,$2,$3-$2,$4,$5,$6-$5}' > matching_test_control.tsv
 
 
 paste <(cut -f1,2 summary.matching_test_control.tsv | tail +2) <(for line in $(cat matching_test_control.tsv | awk '{print $2","$3","$5","$6}'); do simple_fisher_exact.R $line; done | cut -d: -f2 | sed 's/^ //' | sed 's/ $//' | tr ' ' '\n') > file;
 
 mv file summary.matching_test_control.tsv
+```
 
-
-### Enrichment analysis with Metascape
-
-md Metascape_enrich_4_lists/
-
-# prepare lists for metascape
-for i in $clades; do printf $i"\t"; cat $i.under_selection_per_clade_0.05.txt | tr '\n' ','; echo; done > Metascape_enrich_4_lists/for_metascape_4lists.under_selection_per_clade_0.05.$TARGET.txt
-
-# run enrichment analysis: Min Overlap=2; P Value Cutoff=0.05; Min Enrichment=1.5; background genes = all genes.
