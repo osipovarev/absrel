@@ -16,18 +16,18 @@ done
 
 
 ## 2. Run enrichment GO analysis 
-### NB: Replace gene names with human ensembl gene names for the enrichcment analysis
+### NB: Replace gene names with human gene symbols for the enrichcment analysis
 ```
 clades=$(echo hmmbrds honeyeaters nectar_parrots sunbirds falcons lyrebirds swifts passerides)
-RENAMEDICT=~/Documents/LabDocs/Chicken_resources/galGal6_gene.hg38_ens_gene.tsv
+RENAMEDICT=~/Documents/LabDocs/Chicken_resources/galGal6_gene.hg38_gene_symbol.tsv
 
 for i in $clades; \
 do \
  echo $i; \
 
- renameToHLscaffolds.py -c 1 -a $i.under_selection_per_clade_0.05.txt -d <(sed 's/\t/,/' $RENAMEDICT) | grep ^ENSG  > hg38.$i.under_selection_per_clade_0.05.txt; \ 
+ renameToHLscaffolds.py -c 1 -a $i.under_selection_per_clade_0.05.txt -d <(sed 's/\t/,/' $RENAMEDICT) > hg38.$i.under_selection_per_clade_0.05.txt; \ 
  
- goenrich_genelist.R -w $(pwd) -g hg38.$i.under_selection_per_clade_0.05.txt -o ClusterProfiler/hg38.goenrich.$i.under_selection_per_clade_0.05.tsv;
+ goenrich_genelist.R -w $(pwd) -g hg38.$i.under_selection_per_clade_0.05.txt -o ClusterProfiler/hg38.goenrich.$i.under_selection_per_clade_0.05.tsv; \
 done
 ```
 
