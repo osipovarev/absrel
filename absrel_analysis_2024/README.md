@@ -115,3 +115,13 @@ paste <(cut -f1,2 summary.matching_test_control.tsv | tail +2) <(for line in $(c
 mv file summary.matching_test_control.tsv
 ```
 
+## 7. Reviews: Running RELAX
+
+### 7.1. get transcripts under selection in nectar or nonnectar
+```
+ filter_annotation_with_list.py -c 4 -l <(cut -f1 under_selection_ranked_genes_0.5_n*) -a all.genes.pval.table.tsv |  awk '$2<0.05{print}' | cut -f3 | sort -u > transcripts_for_relax.lst
+```
+
+
+
+
