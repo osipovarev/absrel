@@ -37,6 +37,8 @@ done
 ```
 TARGET=nectar
 TARGET=nonnectar
+TARGET=nectar_norelax
+TARGET=nonnectar_norelax
 ```
 
 ### 3.1. Make gene lists
@@ -46,6 +48,8 @@ for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_0.05.$TARGET.tsv 
 
 ### 3.2. Run enrichGO by rank
 ```
+RENAMEDICT=~/Documents/LabDocs/Chicken_resources/galGal6_gene.hg38_gene_symbol.tsv
+
 for f in $(ls rank*genes_selection.lst); \
 do \
 	echo $f; \
@@ -114,6 +118,9 @@ paste <(cut -f1,2 summary.matching_test_control.tsv | tail +2) <(for line in $(c
 
 mv file summary.matching_test_control.tsv
 ```
+
+
+
 
 ## 7. Reviews: Running RELAX
 
