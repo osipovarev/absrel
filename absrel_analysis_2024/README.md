@@ -53,7 +53,7 @@ RENAMEDICT=~/Documents/LabDocs/Chicken_resources/galGal6_gene.hg38_gene_symbol.t
 for f in $(ls rank*genes_selection.lst); \
 do \
 	echo $f; \
-	renameToHLscaffolds.py -c 1 -a $f -d <(sed 's/\t/,/' $RENAMEDICT) | grep ^ENSG  > hg38.$f; \
+	renameToHLscaffolds.py -c 1 -a $f -d <(sed 's/\t/,/' $RENAMEDICT)  > hg38.$f; \
 done
 
 for t in nectar nonnectar; \
@@ -70,15 +70,12 @@ done
 
 ## 4. Test convergence: get 3-4 way convergent terms
 ```
-all_nectaf=$(echo gene_hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv gene_hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv)
+all_nectaf=$(echo hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv)
+
 
 for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); \
 do \
-	grep $g; \
-	for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); \
-	do \
-		grep $g $all_nectaf ; \
-	done | s -u > gene_hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv; \
+	grep $g $all_nectaf | cut -f1,2,8; \
 done | s -u > 3_4_way_convergent_terms.nectar.tsv
 ```
 
