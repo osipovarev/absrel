@@ -15,6 +15,7 @@ done
 ```
 
 
+
 ## 2. Run enrichment GO analysis 
 ### NB: Replace gene names with human gene symbols for the enrichcment analysis
 ```
@@ -84,9 +85,29 @@ do \
 done | s -u > 3_4_way_convergent_terms.nectar.tsv
 ```
 
+### 4.1. Exlcude children GO terms
+```
+GOOBO=~/Documents/LabDocs/GO_terms_genes/go.obo
+golist=$(cut -f2 3_4_way_convergent_terms.nectar.tsv | tail -n +2|  tr '\n' ',')
+
+for g in $(echo $golist | tr ',' '\n'); do echo $g; get_go_children.py -f $GOOBO  -go $g -l $golist ; done| grep "has parents" | awk '{print $1}' > to_exclude_go.lst
+```
 
 
-## 5. Make breakdown of selected terms
+## 5. Find representative (ancestral) GO terms
+```
+for i in {1..4}; \
+do \
+	for c in nectar nonnectar; \
+	do \
+		echo $i; \
+		find_representative_go.R -w $(pwd) -e hg38.goenrich.rank${i}.$c.tsv -o represent_GO.hg38.goenrich.rank${i}.$c.tsv; \
+	done; \
+done
+```
+
+
+### 5.1. Make breakdown of selected terms in representative GO terms
 ```
 for i in {1..4}; \
 do \
@@ -131,6 +152,24 @@ mv file summary.matching_test_control.tsv
  filter_annotation_with_list.py -c 4 -l <(cut -f1 under_selection_ranked_genes_0.5_n*) -a all.genes.pval.table.tsv |  awk '$2<0.05{print}' | cut -f3 | sort -u > transcripts_for_relax.lst
 ```
 
+## 8. Check semantic similarity between terms in GO enrichments of the default and SRV models
+```
+## rank2
+OUT1=represent_GO.hg38.goenrich.rank2.nectar.tsv
+OUT2=../../combined_default_srv_mh_v1/ClusterProfiler/represent_GO.rank2.nectar.tsv
+
+make_all_against_all_table.py -l1 $(cut -f1 $OUT1 | tail -n +2 | tr '\n' ',')  -l2 $(cut -f1 $OUT2 | tail -n +2 |tr '\n' ',') > all_against_all.rank2_versions.txt
+
+awk '$4>0.2{print}' similarity.all_against_all.rank2_versions.txt
+
+## 3-4 way convergence
+OUT1=3_4_way_convergent_terms.nectar.tsv
+OUT2=../../combined_default_srv_mh_v1/ClusterProfiler/3_4_way_convergent_terms.nectar.tsv
+
+make_all_against_all_table.py -l1 $(cut -f2 $OUT1 | tail -n +2 | tr '\n' ',')  -l2 $(cut -f1 $OUT2 | tail -n +2 |tr '\n' ',') > all_against_all.3_4_way_versions.txt
+
+perl go_comb.pl all_against_all.3_4_way_versions.txt similarity.all_against_all.3_4_way_versions.txt
+``` 
 
 
 
