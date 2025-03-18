@@ -21,6 +21,8 @@ done
 clades=$(echo hmmbrds honeyeaters nectar_parrots sunbirds falcons lyrebirds swifts passerides)
 RENAMEDICT=~/Documents/LabDocs/Chicken_resources/galGal6_gene.hg38_gene_symbol.tsv
 
+md ClusterProfiler/
+
 for i in $clades; \
 do \
  echo $i; \
@@ -43,7 +45,10 @@ TARGET=nonnectar_norelax
 
 ### 3.1. Make gene lists
 ```
-for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_0.05.$TARGET.tsv | sort | uniq -c | awk -v var=$i '$1>=var{print $2}' > rank${i}.$TARGET.genes_selection.lst; done
+for TARGET in nectar nonnectar; \
+do \
+	for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_0.05.$TARGET.tsv | sort | uniq -c | awk -v var=$i '$1>=var{print $2}' > rank${i}.$TARGET.genes_selection.lst; done; \
+done
 ```
 
 ### 3.2. Run enrichGO by rank
@@ -70,7 +75,7 @@ done
 
 ## 4. Test convergence: get 3-4 way convergent terms
 ```
-all_nectaf=$(echo hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv)
+all_nectaf=$(echo hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv \ hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv \ hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv \ hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv)
 
 
 for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); \
