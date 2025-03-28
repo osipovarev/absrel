@@ -40,8 +40,8 @@ done
 ```
 TARGET=nectar
 TARGET=nonnectar
-TARGET=nectar_norelax
-TARGET=nonnectar_norelax
+#TARGET=nectar_norelax
+#TARGET=nonnectar_norelax
 ```
 
 ### 3.1. Make gene lists
@@ -76,7 +76,7 @@ done
 
 ## 4. Test convergence: get 3-4 way convergent terms
 ```
-all_nectaf=$(echo hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv \ hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv \ hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv \ hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv)
+all_nectaf="hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv  hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv"
 
 
 for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); \
