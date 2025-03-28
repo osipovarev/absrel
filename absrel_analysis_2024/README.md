@@ -88,9 +88,14 @@ done | s -u > 3_4_way_convergent_terms.nectar.tsv
 ### 4.1. Exlcude children GO terms
 ```
 GOOBO=~/Documents/LabDocs/GO_terms_genes/go.obo
-golist=$(cut -f2 3_4_way_convergent_terms.nectar.tsv | tail -n +2|  tr '\n' ',')
+f=3_4_way_convergent_terms.nectar.tsv
+c=2
+
+golist=$(cut -f${c} $f | tail -n +2|  tr '\n' ',')
 
 for g in $(echo $golist | tr ',' '\n'); do echo $g; get_go_children.py -f $GOOBO  -go $g -l $golist ; done| grep "has parents" | awk '{print $1}' > to_exclude_go.lst
+
+filter_annotation_with_list.py -b -c $c -l to_exclude_go.lst -a $f > noChildren.$f 
 ```
 
 
