@@ -85,17 +85,17 @@ do \
 done | s -u > 3_4_way_convergent_terms.nectar.tsv
 ```
 
-### 4.1. Exlcude children GO terms
+### 4.1. Exlcude children GO terms; exlucde terms iwth gene count < 3
 ```
 GOOBO=~/Documents/LabDocs/GO_terms_genes/go.obo
-f=3_4_way_convergent_terms.nectar.tsv
-c=2
+f=hg38.goenrich.rank2.nonnectar.tsv
+c=1
 
 golist=$(cut -f${c} $f | tail -n +2|  tr '\n' ',')
 
 for g in $(echo $golist | tr ',' '\n'); do echo $g; get_go_children.py -f $GOOBO  -go $g -l $golist ; done| grep "has parents" | awk '{print $1}' > to_exclude_go.lst
 
-filter_annotation_with_list.py -b -c $c -l to_exclude_go.lst -a $f > noChildren.$f 
+filter_annotation_with_list.py -b -c $c -l to_exclude_go.lst -a $f |  awk -F"\t" '$9>=3{print}'> noChildren.gt2genes.$f 
 ```
 
 
@@ -126,6 +126,9 @@ do \
 		done; \
 	done; \
 done > breakdown.interesting_rank_terms.nectar.tsv
+
+
+for g in $(echo $gos | tr ',' ' '); do g $g noChildren.hg38.goenrich.rank2.nectar.tsv; done | cut -f1,2
 ```
 
 
