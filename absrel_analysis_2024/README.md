@@ -10,7 +10,7 @@ clades=$(echo "swifts falcons lyrebirds passerides")
 
 for i in $clades; \
 do \
- grep ^$i under_selection_per_clade_0.05.$TARGET.tsv | cut -f2 > $i.under_selection_per_clade_0.05.txt; \
+ grep ^$i under_selection_per_clade_0.01.$TARGET.tsv | cut -f2 > $i.under_selection_per_clade_0.01.txt; \
 done
 ```
 
@@ -28,9 +28,9 @@ for i in $clades; \
 do \
  echo $i; \
 
- renameToHLscaffolds.py -c 1 -a $i.under_selection_per_clade_0.05.txt -d <(sed 's/\t/,/' $RENAMEDICT) > hg38.$i.under_selection_per_clade_0.05.txt; \ 
+ renameToHLscaffolds.py -c 1 -a $i.under_selection_per_clade_${P}.txt -d <(sed 's/\t/,/' $RENAMEDICT) > hg38.$i.under_selection_per_clade_${P}.txt; \ 
  
- goenrich_genelist.R -w $(pwd) -g hg38.$i.under_selection_per_clade_0.05.txt -o ClusterProfiler/hg38.goenrich.$i.under_selection_per_clade_0.05.tsv; \
+ goenrich_genelist.R -w $(pwd) -g hg38.$i.under_selection_per_clade_${P}.txt -o ClusterProfiler/hg38.goenrich.$i.under_selection_per_clade_${P}.tsv; \
 done
 ```
 
@@ -48,7 +48,7 @@ TARGET=nonnectar
 ```
 for TARGET in nectar nonnectar; \
 do \
-	for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_0.05.$TARGET.tsv | sort | uniq -c | awk -v var=$i '$1>=var{print $2}' > rank${i}.$TARGET.genes_selection.lst; done; \
+	for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_${P}.$TARGET.tsv | sort | uniq -c | awk -v var=$i '$1>=var{print $2}' > rank${i}.$TARGET.genes_selection.lst; done; \
 done
 ```
 
@@ -76,7 +76,7 @@ done
 
 ## 4. Test convergence: get 3-4 way convergent terms
 ```
-all_nectaf="hg38.goenrich.hmmbrds.under_selection_per_clade_0.05.tsv hg38.goenrich.honeyeaters.under_selection_per_clade_0.05.tsv  hg38.goenrich.nectar_parrots.under_selection_per_clade_0.05.tsv hg38.goenrich.sunbirds.under_selection_per_clade_0.05.tsv"
+all_nectaf="hg38.goenrich.hmmbrds.under_selection_per_clade_${P}.tsv hg38.goenrich.honeyeaters.under_selection_per_clade_${P}.tsv  hg38.goenrich.nectar_parrots.under_selection_per_clade_${P}.tsv hg38.goenrich.sunbirds.under_selection_per_clade_${P}.tsv"
 
 
 for g in $(cat $all_nectaf| cut -f1 | grep -v ^ID | s | uniq -c | awk '$1>2{print $2}'); \
@@ -135,17 +135,16 @@ for g in $(echo $gos | tr ',' ' '); do g $g noChildren.hg38.goenrich.rank2.necta
 
 ## 6. Test convergence with Fisher-exact test
 ```
+P=0.01
+
 for i in 2 3 4; \
 do \
-	paste \
-	<(for p in $(grep ^nectar${i}way pairs_test_control.tsv | cut -f2); do shared=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | awk -v var=$i '$1==var{print}' | wc -l| awk '{print $1}'); universe=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | wc -l| awk '{print $1}'); echo -e "$p\t$shared\t$universe"; done) \
-
-	<(for p in $(grep ^nonnectar${i}way pairs_test_control.tsv | cut -f2); do shared=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | awk -v var=$i '$1==var{print}' | wc -l| awk '{print $1}'); universe=$(grep "$p" under_selection_per_clade_0.05.*nectar.tsv | cut -f2 | s | uniq -c | wc -l| awk '{print $1}'); echo -e "$p\t$shared\t$universe"; done); \
+	paste <(for p in $(grep ^nectar${i}way pairs_test_control.tsv | cut -f2); do shared=$(grep "$p" under_selection_per_clade_${P}.*nectar.tsv | cut -f2 | s | uniq -c | awk -v var=$i '$1==var{print}' | wc -l| awk '{print $1}'); universe=$(grep "$p" under_selection_per_clade_${P}.*nectar.tsv | cut -f2 | s | uniq -c | wc -l| awk '{print $1}'); echo -e "$p\t$shared\t$universe"; done) <(for p in $(grep ^nonnectar${i}way pairs_test_control.tsv | cut -f2); do shared=$(grep "$p" under_selection_per_clade_${P}.*nectar.tsv | cut -f2 | s | uniq -c | awk -v var=$i '$1==var{print}' | wc -l| awk '{print $1}'); universe=$(grep "$p" under_selection_per_clade_${P}.*nectar.tsv | cut -f2 | s | uniq -c | wc -l| awk '{print $1}'); echo -e "$p\t$shared\t$universe"; done); \
 
 done | awk '{OFS="\t"; print $1,$2,$3-$2,$4,$5,$6-$5}' > matching_test_control.tsv
 
 
-paste <(cut -f1,2 summary.matching_test_control.tsv | tail +2) <(for line in $(cat matching_test_control.tsv | awk '{print $2","$3","$5","$6}'); do simple_fisher_exact.R $line; done | cut -d: -f2 | sed 's/^ //' | sed 's/ $//' | tr ' ' '\n') > file;
+paste <(cat header.matching_test_control.tsv | tail +2) <(for line in $(cat matching_test_control.tsv | awk '{print $2","$3","$5","$6}'); do simple_fisher_exact.R $line; done | cut -d: -f2 | sed 's/^ //' | sed 's/ $//' | tr ' ' '\n') > file;
 
 mv file summary.matching_test_control.tsv
 ```
@@ -157,7 +156,7 @@ mv file summary.matching_test_control.tsv
 
 ### 7.1. get transcripts under selection in nectar or nonnectar
 ```
- filter_annotation_with_list.py -c 4 -l <(cut -f1 under_selection_ranked_genes_0.5_n*) -a all.genes.pval.table.tsv |  awk '$2<0.05{print}' | cut -f3 | sort -u > transcripts_for_relax.lst
+ filter_annotation_with_list.py -c 4 -l <(cut -f1 under_selection_ranked_genes_0.5_n*) -a all.genes.pval.table.tsv |  awk '$2<${P}{print}' | cut -f3 | sort -u > transcripts_for_relax.lst
 ```
 
 ## 8. Check semantic similarity between terms in GO enrichments of the default and SRV models
