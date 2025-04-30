@@ -46,6 +46,8 @@ TARGET=nonnectar
 
 ### 3.1. Make gene lists
 ```
+P=0.01
+
 for TARGET in nectar nonnectar; \
 do \
 	for i in {1..4}; do echo $i; cut -f2 under_selection_per_clade_${P}.$TARGET.tsv | sort | uniq -c | awk -v var=$i '$1>=var{print $2}' > rank${i}.$TARGET.genes_selection.lst; done; \
@@ -85,7 +87,8 @@ do \
 done | s -u > 3_4_way_convergent_terms.nectar.tsv
 ```
 
-### 4.1. Exlcude children GO terms; exlucde terms iwth gene count < 3
+
+### 4.1. Exlcude children GO terms; exlucde terms with gene count < 3
 ```
 GOOBO=~/Documents/LabDocs/GO_terms_genes/go.obo
 f=hg38.goenrich.rank2.nonnectar.tsv
