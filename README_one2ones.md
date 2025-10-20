@@ -44,7 +44,7 @@ ls batch_hmm/* | xargs -i echo "bash {}" >> batch.hmm
 para make batch.hmm batch.hmm
 ```
 
-### 3. Get one2one orthlogs only
+## 3. Get one2one orthlogs only
 ```
 for db in $(cat ../nectar_birds.lst); do grep "one2one\|one2zero" $genomePath/gbdb-HL/galGal6/TOGA/vs_${db}/orthology_classification.tsv | cut -f1 | s -u > transcripts_count/$db.one2ones.lst; done
 intersect_multiple_files.py  -f transcripts_count/

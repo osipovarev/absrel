@@ -6,9 +6,14 @@ associated with preprint [Convergent and lineage-specific genomic changes shape 
 
 This pipeline describes the following steps:
 
+## 0. Getting orthologs from genome alignments with [TOGA](https://github.com/hillerlab/TOGA)
+
 ## 1. [Extracting alignments of one2one orthologs](https://github.com/osipovarev/absrel/blob/main/README_one2ones.md)
 
 ## 2. [Running aBSREL (HyPhy) screen for selection](https://github.com/osipovarev/absrel/blob/main/README_run_absrel.md)
+
+for details on the method see: [HyPhy](https://stevenweaver.github.io/hyphy-site/methods/selection-methods/)
+
 
 ## 3. [Analysis of aBSREL results](https://github.com/osipovarev/absrel/blob/main/absrel_analysis.ipynb)
 

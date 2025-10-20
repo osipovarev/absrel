@@ -1,28 +1,17 @@
 # Running positive selection screen with aBSREL
 
-### for annotation-based run: 
-```
-gene_file=/projects/project-osipova/NectarivoryProject/absrel/isoforms.ncbi.galGal6.csv
-msa_final_dir=/projects/project-osipova/NectarivoryProject/make_one2one_MSA_iso_ncbi/by_gene_orthologs_MSAs_final/
-absrel_dir=/projects/project-osipova/NectarivoryProject/absrel/run_absrel_by_gene/
-tree=/projects/project-osipova/NectarivoryProject/bird_phylogeny/30_bird_tree.phyloFit.Maggie.mod
-qual_trans=/projects/project-osipova/NectarivoryProject/absrel/results_absrel_annotations/quality.transcripts.lst
-results_dir=/projects/project-osipova/NectarivoryProject/absrel/results_absrel_annotations/
-suff=".30birds.macse.hmm.manual.fa"
-```
 
-### for TOGA projections-absed run:
+## 0. Set up for TOGA projections-based run:
 ```
-md run_absrel_toga_by_gene/
-gene_file=/projects/project-osipova/NectarivoryProject/absrel/isoforms.ncbi.galGal6.csv
-msa_final_dir=/projects/project-osipova/NectarivoryProject/make_one2one_MSA_iso_ncbi/by_gene_toga_orthologs_MSAs_final/
-absrel_dir=/projects/project-osipova/NectarivoryProject/absrel/run_absrel_toga_by_gene/
-tree=/projects/project-osipova/NectarivoryProject/bird_phylogeny/30_bird_tree.phyloFit.Maggie.mod
-results_dir=/projects/project-osipova/NectarivoryProject/absrel/results_absrel_toga/
-qual_trans=/projects/project-osipova/NectarivoryProject/absrel/results_absrel_toga/toga.quality.transcripts.lst
-suff=".30birds.macse.hmm.manual.fa"
+gene_file=validated.final.isoformes.galGal6.ncbi_appris.csv
+isoformes=validated.final.isoformes.galGal6.ncbi_appris.tsv
+tree=/projects/hillerlab/genome/gbdb-HL/galGal6/maf/multiz45way_2021/45_bird_tree.philofit_4d.mod
+suff=".hmm.manual.fa"
+msa_final_dir=/projects/project-eosipova/NectarivoryProject/one2one_MSA_2024/one2one_MSAs/
+absrel_dir=/projects/project-eosipova/NectarivoryProject/absrel_2024/run_absrel_toga_by_gene/
+results_dir=/projects/project-eosipova/NectarivoryProject/absrel_2024/results_absrel_toga/
+qual_trans=/projects/project-eosipova/NectarivoryProject/one2one_MSA_2024/good.transcripts.lst
 ```
-
 
 ## 1. Write tree_doctor jobs; prepare output dir structure
 ```
@@ -36,7 +25,7 @@ para make batch.tree.doc batch.tree.doc
 # 1 min
 ```
 
-## 2. Write absrel jobs
+## 2. Write aBSREL jobs
 ```
 write_absrel_jobs.sh $gene_file $msa_final_dir $absrel_dir $qual_trans $suff > jobs.absrel
 
@@ -46,8 +35,12 @@ ls batch_absrel/* | xargs -i echo "bash {}" > batch.absrel
 para make batch.absrel batch.absrel
 # 20 hours
 ```
-1738 absrel jobs failed due to time limit -> resubmitted.
-8 hours
+
+### Run aBSREL for four differnet models independently:
+1) -defalut: 	with just "ENV='TOLERATE_NUMERICAL_ERRORS=1;"
+2) -SRV: 		"--srv Yes"
+3) -MH:  		"--multiple-hits Double+Triple"
+3) -SRV+MH:  	"--multiple-hits Double+Triple --srv Yes"
 
 
 
@@ -67,9 +60,50 @@ para make batch.parse batch.parse
 write_pval_table.sh isoforms.ncbi.galGal6.tsv $absrel_dir > $results_dir/all.genes.pval.table.tsv
 ```
 
-## 5. Next: see absrel_stats.ipynb)
+
+## 5. Find the best model fit for each transcript
+
+### 5.1. Make table AIC-c v58 default VS srv
+```
+for t in $(cat ../one2one_MSA_2024/good.transcripts.lst); do \
+    g=$(grep $t validated.final.isoformes.galGal6.ncbi_appris.tsv | cut -f1); \
+    aic=$(grep "AIC-c" run_absrel_toga_by_gene/$g/$t/out_v58.$t.json | tail -1 | awk -F"[:,]" '{print $2}'); \
+    aic_srv=$(grep "AIC-c" run_absrel_toga_by_gene/$g/$t/out_v58_srv.$t.json | tail -1 | awk -F"[:,]" '{print $2}'); \
+    echo -e "$g\t$t\t$aic\t$aic_srv"; \
+done > AICc.v58_VS_v58_srv.tsv
+```
+
+### 5.2. Get AIC-c for v58 srv mh
+```
+for t in $(cat ../one2one_MSA_2024/good.transcripts.lst); do \
+    g=$(grep $t validated.final.isoformes.galGal6.ncbi_appris.tsv | cut -f1); \
+    aic_srv_mh=$(grep "AIC-c" run_absrel_toga_by_gene/$g/$t/out_v58_srv_mh.$t.json | tail -1 | awk -F"[:,]" '{print $2}'); \
+    echo -e "$t\t$aic_srv_mh"; \
+done > AICc.v58_srv_mh.tsv
+```
+
+### 5.3. Find the best model for each transcript
+```
+find_best_values.py -c 2 -i AICc.v58_VS_v58_srv_VS_v58_srv_mh.tsv > best_model.AIC.tsv
+awk '$3==1{print $1}' best_model.AIC.tsv > srv_better.transcripts.lst	# 262
+awk '$3==2{print $1}' best_model.AIC.tsv > mh_better.transcripts.lst	# 87
+awk '$3==3{print $1}' best_model.AIC.tsv > srv_mh_better.transcripts.lst 	# 38
+# default = 31321
+```
+
+### 5.4. Make combined table
+```
+filter_annotation_with_list.py -c 3 -a all.genes.pval.table.v58_srv_mh.tsv -l srv_mh_better.transcripts.lst > srv_mh_better.genes.pval.table.v58_srv_mh.tsv
+filter_annotation_with_list.py -c 3 -a all.genes.pval.table.v58_tolerate_mh.tsv -l mh_better.transcripts.lst > mh_better.genes.pval.table.v58_tolerate_mh.tsv
+filter_annotation_with_list.py -c 3 -a
+all.genes.pval.table.v58_srv_mh.tsv -l srv_mh_better.transcripts.lst > srv_mh_better.genes.pval.table.v58_srv_mh.tsv
+filter_annotation_with_list.py -b -c 3 -a all.genes.pval.table.v58_tolerate.tsv -l <(cat srv_better.transcripts.lst srv_mh_better.transcripts.lst mh_better.transcripts.lst) > default_better.genes.pval.table.v58_tolerate.tsv
+
+cat default_better.genes.pval.table.v58_tolerate.tsv srv_better.genes.pval.table.v58_srv.tsv mh_better.genes.pval.table.v58_tolerate_mh.tsv srv_mh_better.genes.pval.table.v58_srv_mh.tsv > combined.all.genes.pval.table.v58.tsv
+```
 
 
+## 6. Next: see [absrel_stats.ipynb](https://github.com/osipovarev/absrel/blob/main/absrel_analysis.ipynb)
 
 
 ***
