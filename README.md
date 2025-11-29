@@ -20,9 +20,15 @@ for details on the method see: [HyPhy](https://stevenweaver.github.io/hyphy-site
 ## 4. [Functional enrichment analysis with ClusterProfiler](https://github.com/osipovarev/absrel/blob/main/absrel_analysis_2024/README_enrich_analsyis.md)
 
 ### Scripts
-assocaited scripts can be found [here](https://github.com/osipovarev/selection_screen_tools) or [here](https://github.com/osipovarev/Enrichment_analysis) or [here](https://github.com/osipovarev/Annotation_scripts)
+assocaited scripts can be found in the following repos: \
+- [selection_screen_tools](https://github.com/osipovarev/selection_screen_tools) 
+- [Enrichment_analysis](https://github.com/osipovarev/Enrichment_analysis) 
+- [Annotation_scripts](https://github.com/osipovarev/Annotation_scripts)
+- [msa_tools](https://github.com/osipovarev/msa_tools/manual_filter_msa.py)
+- [fasta_tools](https://github.com/osipovarev/fasta_tools/translate.py)
 
 ***
+
 
 ### Additional
 
