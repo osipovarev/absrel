@@ -24,11 +24,10 @@ assocaited scripts can be found in the following repos: \
 - [selection_screen_tools](https://github.com/osipovarev/selection_screen_tools) 
 - [Enrichment_analysis](https://github.com/osipovarev/Enrichment_analysis) 
 - [Annotation_scripts](https://github.com/osipovarev/Annotation_scripts)
-- [msa_tools](https://github.com/osipovarev/msa_tools/manual_filter_msa.py)
-- [fasta_tools](https://github.com/osipovarev/fasta_tools/translate.py)
+- [msa_tools](https://github.com/osipovarev/msa_tools/)
+- [fasta_tools](https://github.com/osipovarev/fasta_tools/)
 
 ***
-
 
 ### Additional
 
